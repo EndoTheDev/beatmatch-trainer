@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, NgZone } from '@angular/core';
-import { DeckState, createDeck, nudge as nudgeDeck, effectiveBpm, phaseDiff, isInPhase } from './engine/deck';
+import { DeckState, createDeck, nudge as nudgeDeck, setBend, effectiveBpm, phaseDiff, isInPhase } from './engine/deck';
 import { KITS, getKit } from './engine/kits';
 import { ScheduledDeck, createScheduledDeck, beatPosAt, reanchor, tick, LOOKAHEAD_SECONDS, TICK_INTERVAL_MS } from './engine/scheduler';
 
@@ -149,7 +149,7 @@ export class TrainerService {
     ui.update((s) => ({ ...s, bpm }));
   }
 
-  /** Nudge: push (positive) or drag (negative) deck forward/back in beats. */
+  /** Nudge: instant offset (legacy discrete mode). */
   nudge(side: 'A' | 'B', beats: number): void {
     const sd = side === 'A' ? this.sdA! : this.sdB!;
     if (this.ctx) reanchor(sd, this.ctx.currentTime);
@@ -157,6 +157,32 @@ export class TrainerService {
     // offsets changed; scheduled window stays valid (we schedule forward only)
     sd.anchorBeatPos += beats;
     sd.scheduledUpToBeat += beats;
+  }
+
+  /**
+   * Pitch bend (hold-to-bend): while held, tempo is offset by the
+   * adjustable rate; release zeroes it and keeps the phase traveled to.
+   */
+  bendStart(side: 'A' | 'B', direction: 1 | -1): void {
+    const sd = side === 'A' ? this.sdA! : this.sdB!;
+    if (this.ctx) reanchor(sd, this.ctx.currentTime);
+    setBend(sd.state, direction * this.bendRate());
+  }
+
+  bendEnd(side: 'A' | 'B'): void {
+    const sd = side === 'A' ? this.sdA! : this.sdB!;
+    if (!sd) return; // deck never initialized - nothing playing anyway
+    if (this.ctx) reanchor(sd, this.ctx.currentTime);
+    setBend(sd.state, 0);
+  }
+
+  /** bend rate in %/s, adjustable 0.5..4, persisted */
+  readonly bendRate = signal<number>(Number(localStorage.getItem('bt-bend-rate') ?? '1.5'));
+
+  setBendRate(rate: number): void {
+    const clamped = Math.min(4, Math.max(0.5, rate));
+    this.bendRate.set(clamped);
+    localStorage.setItem('bt-bend-rate', String(clamped));
   }
 
   setVolume(side: 'A' | 'B', v: number): void {

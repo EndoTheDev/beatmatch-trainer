@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { createDeck, effectiveBpm, beatSeconds, phaseDiff, isInPhase, nudge } from './deck';
+import { createDeck, effectiveBpm, beatSeconds, phaseDiff, isInPhase, nudge, setBend } from './deck';
 import { ladderGapPercent, timeInPhasePercent, gradeFor, summarize } from './scoring';
 import { KITS, getKit } from './kits';
 import { voicesOnStep } from './synth';
@@ -172,5 +172,25 @@ describe('scheduler', () => {
     const { aPos, bPos } = tick(a, b, f.ctx);
     expect(aPos).toBeCloseTo(1);
     expect(bPos).toBeCloseTo(1);
+  });
+});
+
+describe('pitch bend', () => {
+  it('bend changes effective bpm additively with the fader', () => {
+    const d = createDeck(120);
+    d.pitchPercent = 2;
+    setBend(d, 1.5);
+    expect(effectiveBpm(d)).toBeCloseTo(120 * 1.035);
+  });
+
+  it('release zeroes the bend but keeps the fader and phase', () => {
+    const d = createDeck(120);
+    d.pitchPercent = 2;
+    setBend(d, -1.5);
+    nudge(d, 0.3); // phase traveled during the bend hold
+    setBend(d, 0); // release
+    expect(effectiveBpm(d)).toBeCloseTo(120 * 1.02);
+    expect(d.offsetBeats).toBeCloseTo(0.3); // phase kept
+    expect(d.bendPercent).toBe(0);
   });
 });

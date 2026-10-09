@@ -12,6 +12,8 @@ export interface DeckState {
   bpm: number;
   /** pitch fader position, -8..+8 (%) */
   pitchPercent: number;
+  /** pitch-bend while nudge is held, (%) - lives only while held, never persists */
+  bendPercent: number;
   /** playhead offset in beats (nudge changes this; cue sets/returns to it) */
   offsetBeats: number;
   /** cue point in beats */
@@ -20,12 +22,12 @@ export interface DeckState {
 }
 
 export function createDeck(bpm: number): DeckState {
-  return { bpm, pitchPercent: 0, offsetBeats: 0, cueBeats: 0, playing: false };
+  return { bpm, pitchPercent: 0, bendPercent: 0, offsetBeats: 0, cueBeats: 0, playing: false };
 }
 
-/** Effective BPM after pitch fader. */
+/** Effective BPM after pitch fader + any held bend. */
 export function effectiveBpm(deck: DeckState): number {
-  return deck.bpm * (1 + deck.pitchPercent / 100);
+  return deck.bpm * (1 + (deck.pitchPercent + deck.bendPercent) / 100);
 }
 
 /** Seconds per beat at the current effective tempo. */
@@ -43,8 +45,17 @@ export function advance(beatPos: number, deck: DeckState, dtSeconds: number): nu
 }
 
 /**
- * Nudge: temporarily shift phase. We model it as an instant offset change
- * in beats (positive = push forward/ahead, negative = pull back).
+ * Pitch bend: hold-to-bend like a CDJ platter. While the nudge button is held,
+ * the deck's tempo is offset by bendPercent (sign = push/drag direction).
+ * Release zeroes the bend - the phase traveled to is kept.
+ */
+export function setBend(deck: DeckState, percent: number): void {
+  deck.bendPercent = percent;
+}
+
+/**
+ * Nudge (legacy discrete mode, still used by cue-jog semantics):
+ * an instant offset change in beats.
  */
 export function nudge(deck: DeckState, beats: number): void {
   deck.offsetBeats += beats;

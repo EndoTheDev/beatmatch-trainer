@@ -44,9 +44,13 @@ import { TrainerService, DeckUiState } from '../trainer.service';
       </div>
 
       <div class="nudge-row">
-        <button type="button" class="btn nudge" (click)="nudge(-0.05)" aria-label="drag back">&#9664; drag</button>
-        <span class="nudge-mid">nudge</span>
-        <button type="button" class="btn nudge" (click)="nudge(0.05)" aria-label="push forward">push &#9654;</button>
+        <button type="button" class="btn nudge"
+          (pointerdown)="bendStart(-1)" (pointerup)="bendEnd()" (pointerleave)="bendEnd()" (pointercancel)="bendEnd()"
+          aria-label="drag back - hold to slow down">&#9664; drag</button>
+        <span class="nudge-mid">hold to bend</span>
+        <button type="button" class="btn nudge"
+          (pointerdown)="bendStart(1)" (pointerup)="bendEnd()" (pointerleave)="bendEnd()" (pointercancel)="bendEnd()"
+          aria-label="push forward - hold to speed up">push &#9654;</button>
       </div>
 
       <div class="mix-row">
@@ -105,7 +109,8 @@ export class DeckPanel {
   readonly volumeChange = output<{ side: 'A' | 'B'; value: number }>();
   readonly kitChange = output<{ side: 'A' | 'B'; value: string }>();
   readonly transport = output<{ side: 'A' | 'B'; action: 'play' | 'stop' | 'cue' }>();
-  readonly nudgeOut = output<{ side: 'A' | 'B'; beats: number }>();
+  readonly bendStartOut = output<{ side: 'A' | 'B'; direction: 1 | -1 }>();
+  readonly bendEndOut = output<'A' | 'B'>();
   readonly muteToggle = output<'A' | 'B'>();
 
   onPitch(e: Event) { this.pitchChange.emit({ side: this.side(), value: Number((e.target as HTMLInputElement).value) }); }
@@ -114,6 +119,7 @@ export class DeckPanel {
   play() { this.transport.emit({ side: this.side(), action: 'play' }); }
   stop() { this.transport.emit({ side: this.side(), action: 'stop' }); }
   cue() { this.transport.emit({ side: this.side(), action: 'cue' }); }
-  nudge(beats: number) { this.nudgeOut.emit({ side: this.side(), beats }); }
+  bendStart(direction: 1 | -1) { this.bendStartOut.emit({ side: this.side(), direction }); }
+  bendEnd() { this.bendEndOut.emit(this.side()); }
   toggleMute() { this.muteToggle.emit(this.side()); }
 }

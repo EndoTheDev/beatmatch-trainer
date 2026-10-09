@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { TrainerService } from './trainer.service';
 import { DeckPanel } from './deck-panel/deck-panel';
@@ -14,6 +14,17 @@ import { PhaseMeter } from './phase-meter/phase-meter';
         <h1>beatmatch trainer</h1>
         <p class="sub">two decks, your ears, no sync button.</p>
       </header>
+
+      <nav class="meta-row">
+        <button type="button" class="btn" (click)="cycleTheme()" [attr.aria-label]="'theme: ' + theme()">
+          theme: {{ theme() }}
+        </button>
+        <label class="rate">
+          bend rate {{ trainer.bendRate() | number: '1.1-1' }}%/s
+          <input type="range" min="0.5" max="4" step="0.1" [value]="trainer.bendRate()"
+            (input)="onBendRate($event)" aria-label="bend rate, percent per second">
+        </label>
+      </nav>
 
       <nav class="mode-row">
         <button type="button" class="btn" [class.active]="!trainer.challenge()" (click)="setMode(false)">practice</button>
@@ -58,7 +69,8 @@ import { PhaseMeter } from './phase-meter/phase-meter';
           (volumeChange)="onVolume($event)"
           (kitChange)="onKit($event)"
           (transport)="onTransport($event)"
-          (nudgeOut)="onNudge($event)"
+          (bendStartOut)="onBendStart($event)"
+          (bendEndOut)="onBendEnd($event)"
           (muteToggle)="onMute($event)"
         />
         <bt-deck-panel
@@ -71,7 +83,8 @@ import { PhaseMeter } from './phase-meter/phase-meter';
           (volumeChange)="onVolume($event)"
           (kitChange)="onKit($event)"
           (transport)="onTransport($event)"
-          (nudgeOut)="onNudge($event)"
+          (bendStartOut)="onBendStart($event)"
+          (bendEndOut)="onBendEnd($event)"
           (muteToggle)="onMute($event)"
         />
       </div>
@@ -84,13 +97,18 @@ import { PhaseMeter } from './phase-meter/phase-meter';
   styles: `
     :host { --bt-fg: #e8e8e8; --bt-a: #c96f4a; --bt-a-contrast: #1a1a1a; --bt-border: #3a3a3a; --bt-card: #232323; --bt-bg: #141414; }
     @media (prefers-color-scheme: light) {
-      :host { --bt-fg: #1a1a1a; --bt-a: #b85c38; --bt-a-contrast: #fff; --bt-border: #ccc; --bt-card: #f5f5f5; --bt-bg: #fafafa; }
+      :host:not(.bt-dark) { --bt-fg: #1a1a1a; --bt-a: #b85c38; --bt-a-contrast: #fff; --bt-border: #ccc; --bt-card: #f5f5f5; --bt-bg: #fafafa; }
     }
+    :host.bt-light { --bt-fg: #1a1a1a; --bt-a: #b85c38; --bt-a-contrast: #fff; --bt-border: #ccc; --bt-card: #f5f5f5; --bt-bg: #fafafa; }
+    :host.bt-dark { --bt-fg: #e8e8e8; --bt-a: #c96f4a; --bt-a-contrast: #1a1a1a; --bt-border: #3a3a3a; --bt-card: #232323; --bt-bg: #141414; }
     :host { display: block; min-height: 100vh; background: var(--bt-bg); color: var(--bt-fg); font-family: system-ui, sans-serif; }
     .wrap { max-width: 780px; margin: 0 auto; padding: 20px 16px 40px; }
     .head h1 { margin: 0 0 2px; font-size: 1.5rem; letter-spacing: 0.02em; }
     .sub { margin: 0 0 16px; opacity: 0.6; font-size: 0.9rem; }
+    .meta-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
     .mode-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .rate { display: flex; gap: 8px; align-items: center; font-size: 0.85rem; }
+    .rate input { accent-color: var(--bt-a); width: 120px; }
     .btn { border: 1px solid var(--bt-border); background: var(--bt-card); color: inherit; border-radius: 8px; padding: 7px 12px; cursor: pointer; font: inherit; }
     .btn:hover { border-color: var(--bt-a); }
     .btn.active, .btn.start { background: var(--bt-a); color: var(--bt-a-contrast); border-color: var(--bt-a); }
@@ -109,6 +127,32 @@ import { PhaseMeter } from './phase-meter/phase-meter';
 })
 export class App {
   readonly trainer = inject(TrainerService);
+  readonly theme = signal<'auto' | 'light' | 'dark'>(
+    (localStorage.getItem('bt-theme') as 'auto' | 'light' | 'dark') ?? 'auto',
+  );
+
+  constructor() {
+    this.applyTheme(this.theme());
+  }
+
+  cycleTheme() {
+    const order = ['auto', 'light', 'dark'] as const;
+    const next = order[(order.indexOf(this.theme()) + 1) % order.length];
+    this.theme.set(next);
+    localStorage.setItem('bt-theme', next);
+    this.applyTheme(next);
+  }
+
+  private applyTheme(t: 'auto' | 'light' | 'dark') {
+    const doc = document.documentElement;
+    doc.classList.toggle('bt-light', t === 'light');
+    doc.classList.toggle('bt-dark', t === 'dark');
+    doc.style.colorScheme = t === 'auto' ? 'light dark' : t;
+  }
+
+  onBendRate(e: Event) { this.trainer.setBendRate(Number((e.target as HTMLInputElement).value)); }
+  onBendStart(e: { side: 'A' | 'B'; direction: 1 | -1 }) { this.trainer.bendStart(e.side, e.direction); }
+  onBendEnd(side: 'A' | 'B') { this.trainer.bendEnd(side); }
 
   setMode(challenge: boolean) {
     this.trainer.challenge.set(challenge);
@@ -121,7 +165,6 @@ export class App {
   onVolume(e: { side: 'A' | 'B'; value: number }) { this.trainer.setVolume(e.side, e.value); }
   onKit(e: { side: 'A' | 'B'; value: string }) { this.trainer.setKit(e.side, e.value); }
   onMute(side: 'A' | 'B') { this.trainer.toggleMute(side); }
-  onNudge(e: { side: 'A' | 'B'; beats: number }) { this.trainer.nudge(e.side, e.beats); }
 
   onTransport(e: { side: 'A' | 'B'; action: 'play' | 'stop' | 'cue' }) {
     if (e.action === 'play') {
