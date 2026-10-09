@@ -1,0 +1,19 @@
+services:
+  beatmatch-trainer:
+    container_name: tools-beatmatch
+    build: .
+    image: ghcr.io/endothedev/beatmatch-trainer:latest
+    labels:
+      - "traefik.enable=true"
+      # ponytail: NO strip-prefix - the app's index.html carries base href
+      # /tools/beatmatch-trainer/ and nginx serves under that path; the full
+      # path must reach the container (baseURL/strip-prefix XOR rule).
+      - "traefik.http.routers.tools-beatmatch.rule=Host(`endothe.dev`) && PathPrefix(`/tools/beatmatch-trainer`)"
+      - "traefik.http.services.tools-beatmatch.loadbalancer.server.port=80"
+    networks:
+      - services
+    restart: unless-stopped
+
+networks:
+  services:
+    external: true
