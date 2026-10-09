@@ -1,0 +1,119 @@
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { DecimalPipe } from '@angular/common';
+import { TrainerService, DeckUiState } from '../trainer.service';
+
+/**
+ * One full deck panel: transport, pitch fader, nudge, volume/mute, kit select.
+ * Used twice (side = 'A' | 'B').
+ */
+@Component({
+  selector: 'bt-deck-panel',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, DecimalPipe],
+  template: `
+    <section class="deck" [class.deck-a]="side() === 'A'">
+      <header>
+        <h2>deck {{ side() }}</h2>
+        @if (state(); as s) {
+          @if (!hideBpm()) {
+            <span class="bpm">{{ s.bpm | number: '1.0-1' }} bpm</span>
+          } @else {
+            <span class="bpm bpm-hidden">--.- bpm</span>
+          }
+        }
+      </header>
+
+      <div class="transport">
+        <button type="button" class="btn play" (click)="play()" [class.active]="state()?.playing">
+          {{ state()?.playing ? 'pause' : 'play' }}
+        </button>
+        <button type="button" class="btn stop" (click)="stop()">stop</button>
+        <button type="button" class="btn cue" (click)="cue()">cue</button>
+      </div>
+
+      <div class="fader-row">
+        <span class="fader-label">-8</span>
+        <input
+          type="range" min="-8" max="8" step="0.1" [value]="state()?.pitchPercent ?? 0"
+          (input)="onPitch($event)" class="pitch-fader"
+          [attr.aria-label]="'deck ' + side() + ' pitch fader, percent'"
+        >
+        <span class="fader-label">+8</span>
+        <span class="pitch-value">{{ state()?.pitchPercent ?? 0 >= 0 ? '+' : '' }}{{ state()?.pitchPercent ?? 0 | number: '1.1-1' }}%</span>
+      </div>
+
+      <div class="nudge-row">
+        <button type="button" class="btn nudge" (click)="nudge(-0.05)" aria-label="drag back">&#9664; drag</button>
+        <span class="nudge-mid">nudge</span>
+        <button type="button" class="btn nudge" (click)="nudge(0.05)" aria-label="push forward">push &#9654;</button>
+      </div>
+
+      <div class="mix-row">
+        <label>
+          volume
+          <input type="range" min="0" max="1" step="0.01" [value]="state()?.volume ?? 0.8"
+            (input)="onVolume($event)" [attr.aria-label]="'deck ' + side() + ' volume'">
+        </label>
+        <button type="button" class="btn mute" (click)="toggleMute()" [class.active]="state()?.muted">
+          {{ state()?.muted ? 'unmute' : 'mute' }}
+        </button>
+      </div>
+
+      <label class="kit-row">
+        kit
+        <select [value]="kit()" (change)="onKit($event)">
+          @for (k of kits(); track k.id) {
+            <option [value]="k.id">{{ k.name }}</option>
+          }
+        </select>
+      </label>
+    </section>
+  `,
+  styles: `
+    .deck { border: 1px solid var(--bt-border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 250px; }
+    .deck-a { border-color: color-mix(in oklab, var(--bt-a) 60%, var(--bt-border)); }
+    header { display: flex; justify-content: space-between; align-items: baseline; }
+    h2 { margin: 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .bpm { font-variant-numeric: tabular-nums; }
+    .bpm-hidden { opacity: 0.4; }
+    .transport { display: flex; gap: 8px; }
+    .btn { border: 1px solid var(--bt-border); background: var(--bt-card); color: inherit; border-radius: 8px; padding: 8px 12px; cursor: pointer; font: inherit; }
+    .btn:hover { border-color: var(--bt-a); }
+    .btn.active { background: var(--bt-a); color: var(--bt-a-contrast); border-color: var(--bt-a); }
+    .btn.play { flex: 1; }
+    .fader-row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center; }
+    .pitch-fader { accent-color: var(--bt-a); }
+    .fader-label, .pitch-value { font-size: 0.8rem; opacity: 0.8; font-variant-numeric: tabular-nums; }
+    .nudge-row { display: flex; align-items: center; gap: 8px; }
+    .nudge-mid { flex: 1; text-align: center; font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.1em; }
+    .mix-row { display: flex; gap: 8px; align-items: center; }
+    .mix-row label { flex: 1; display: flex; gap: 8px; align-items: center; font-size: 0.85rem; }
+    .kit-row { display: flex; gap: 8px; align-items: center; font-size: 0.85rem; }
+    select { background: var(--bt-card); color: inherit; border: 1px solid var(--bt-border); border-radius: 8px; padding: 6px 8px; font: inherit; }
+    input[type='range'] { flex: 1; }
+  `,
+})
+export class DeckPanel {
+  readonly side = input.required<'A' | 'B'>();
+  readonly hideBpm = input(false);
+  readonly state = input<DeckUiState | null>(null);
+  readonly kit = input('');
+  readonly kits = input<import('../engine/kits').DrumKit[]>([]);
+  readonly pitchChange = output<{ side: 'A' | 'B'; value: number }>();
+  readonly bpmChange = output<{ side: 'A' | 'B'; value: number }>();
+  readonly volumeChange = output<{ side: 'A' | 'B'; value: number }>();
+  readonly kitChange = output<{ side: 'A' | 'B'; value: string }>();
+  readonly transport = output<{ side: 'A' | 'B'; action: 'play' | 'stop' | 'cue' }>();
+  readonly nudgeOut = output<{ side: 'A' | 'B'; beats: number }>();
+  readonly muteToggle = output<'A' | 'B'>();
+
+  onPitch(e: Event) { this.pitchChange.emit({ side: this.side(), value: Number((e.target as HTMLInputElement).value) }); }
+  onVolume(e: Event) { this.volumeChange.emit({ side: this.side(), value: Number((e.target as HTMLInputElement).value) }); }
+  onKit(e: Event) { this.kitChange.emit({ side: this.side(), value: (e.target as HTMLSelectElement).value }); }
+  play() { this.transport.emit({ side: this.side(), action: 'play' }); }
+  stop() { this.transport.emit({ side: this.side(), action: 'stop' }); }
+  cue() { this.transport.emit({ side: this.side(), action: 'cue' }); }
+  nudge(beats: number) { this.nudgeOut.emit({ side: this.side(), beats }); }
+  toggleMute() { this.muteToggle.emit(this.side()); }
+}
