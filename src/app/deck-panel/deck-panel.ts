@@ -26,71 +26,69 @@ import { TrainerService, DeckUiState } from '../trainer.service';
         }
       </header>
 
-      <div class="platter-row">
-        <bt-platter [side]="side()" />
-        <div class="bpm-big">
-          @if (state(); as s) {
-            @if (!hideBpm()) {
-              {{ s.bpm | number: '1.0-1' }}
-            } @else {
-              --.-
+      <div class="face">
+        <div class="left-col">
+          <bt-platter [side]="side()" />
+          <div class="bpm-big">
+            @if (state(); as s) {
+              @if (!hideBpm()) {
+                {{ s.bpm | number: '1.0-1' }}
+              } @else {
+                --.-
+              }
             }
-          }
+          </div>
+          <div class="transport-grid">
+            <button type="button" class="btn play" (click)="play()" [class.active]="state()?.playing">
+              {{ state()?.playing ? 'pause' : 'play' }}
+            </button>
+            <button type="button" class="btn" (click)="cue()">cue</button>
+            <button type="button" class="btn" (click)="stop()">stop</button>
+            <span class="slot" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <div class="fader-col">
+          <span class="fader-scale top">+8</span>
+          <input
+            type="range" min="-8" max="8" step="0.1" [value]="state()?.pitchPercent ?? 0"
+            (input)="onPitch($event)" class="pitch-fader" btWheel [btWheelStep]="0.1"
+            [attr.aria-label]="'deck ' + side() + ' pitch fader, percent'"
+          >
+          <span class="fader-scale zero">0</span>
+          <span class="fader-scale bottom">-8</span>
+          <span class="pitch-value">{{ (state()?.pitchPercent ?? 0) >= 0 ? '+' : '' }}{{ state()?.pitchPercent ?? 0 | number: '1.1-1' }}%</span>
         </div>
       </div>
 
       <div class="bpm-row">
+        <span class="row-label">tempo</span>
         <input
           type="range" min="60" max="200" step="0.5" [value]="state()?.bpm ?? 124"
           class="bpm-slider" btWheel [btWheelStep]="0.5"
           (input)="onBpm($event)" (wheelChange)="onBpmVal($event)"
           [attr.aria-label]="'deck ' + side() + ' tempo, bpm'"
         >
-        <span class="bpm-num">{{ state()?.bpm | number: '1.0-1' }}</span>
+        <span class="row-val">{{ state()?.bpm | number: '1.0-1' }}</span>
       </div>
 
-      <div class="transport">
-        <button type="button" class="btn play" (click)="play()" [class.active]="state()?.playing">
-          {{ state()?.playing ? 'pause' : 'play' }}
-        </button>
-        <button type="button" class="btn stop" (click)="stop()">stop</button>
-        <button type="button" class="btn cue" (click)="cue()">cue</button>
-      </div>
-
-      <div class="fader-row">
-        <span class="fader-label">-8</span>
-        <input
-          type="range" min="-8" max="8" step="0.1" [value]="state()?.pitchPercent ?? 0"
-          (input)="onPitch($event)" class="pitch-fader"
-          [attr.aria-label]="'deck ' + side() + ' pitch fader, percent'"
-        >
-        <span class="fader-label">+8</span>
-        <span class="pitch-value">{{ state()?.pitchPercent ?? 0 >= 0 ? '+' : '' }}{{ state()?.pitchPercent ?? 0 | number: '1.1-1' }}%</span>
-      </div>
-
-      <div class="nudge-row">
-        <button type="button" class="btn nudge"
-          (pointerdown)="bendStart(-1)" (pointerup)="bendEnd()" (pointerleave)="bendEnd()" (pointercancel)="bendEnd()"
-          aria-label="drag back - hold to slow down">&#9664; drag</button>
-        <span class="nudge-mid">hold to bend</span>
-        <button type="button" class="btn nudge"
-          (pointerdown)="bendStart(1)" (pointerup)="bendEnd()" (pointerleave)="bendEnd()" (pointercancel)="bendEnd()"
-          aria-label="push forward - hold to speed up">push &#9654;</button>
+      <div class="bend-row">
+        <button type="button" class="btn bend" (pointerdown)="bendStart(-1)" (pointerup)="bendEnd()" (pointerleave)="bendEnd()" (pointercancel)="bendEnd()" aria-label="drag back - hold to slow down">&#9664; drag</button>
+        <span class="bend-mid">hold to bend</span>
+        <button type="button" class="btn bend" (pointerdown)="bendStart(1)" (pointerup)="bendEnd()" (pointerleave)="bendEnd()" (pointercancel)="bendEnd()" aria-label="push forward - hold to speed up">push &#9654;</button>
       </div>
 
       <div class="mix-row">
-        <label>
-          volume
-          <input type="range" min="0" max="1" step="0.01" [value]="state()?.volume ?? 0.8"
-            (input)="onVolume($event)" [attr.aria-label]="'deck ' + side() + ' volume'">
-        </label>
+        <span class="row-label">volume</span>
+        <input type="range" min="0" max="1" step="0.01" [value]="state()?.volume ?? 0.8"
+          (input)="onVolume($event)" btWheel [btWheelStep]="0.02" [attr.aria-label]="'deck ' + side() + ' volume'">
         <button type="button" class="btn mute" (click)="toggleMute()" [class.active]="state()?.muted">
           {{ state()?.muted ? 'unmute' : 'mute' }}
         </button>
       </div>
 
       <label class="kit-row">
-        kit
+        <span class="row-label">kit</span>
         <select [value]="kit()" (change)="onKit($event)">
           @for (k of kits(); track k.id) {
             <option [value]="k.id">{{ k.name }}</option>
@@ -100,37 +98,43 @@ import { TrainerService, DeckUiState } from '../trainer.service';
     </section>
   `,
   styles: `
-    .deck { border: 1px solid var(--bt-border); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0; background: var(--bt-well); box-shadow: inset 0 2px 6px rgba(0,0,0,0.25); }
+    .deck { border: 1px solid var(--bt-border); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; background: var(--bt-well); box-shadow: inset 0 2px 6px rgba(0,0,0,0.25); }
     .deck-a { border-color: color-mix(in oklab, var(--bt-accent) 45%, var(--bt-border)); }
-    header { display: flex; justify-content: space-between; align-items: baseline; }
-    h2 { margin: 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.08em; }
-    .bpm { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.05rem; color: var(--bt-accent); text-shadow: 0 0 10px color-mix(in oklab, var(--bt-accent) 40%, transparent); }
+    .deck-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 4px; border-bottom: 1px solid var(--bt-border); }
+    h2 { margin: 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; }
+    .bpm { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--bt-accent); text-shadow: 0 0 10px color-mix(in oklab, var(--bt-accent) 40%, transparent); }
     .bpm-hidden { opacity: 0.4; color: var(--bt-fg); text-shadow: none; }
-    .bpm-hidden { opacity: 0.4; }
-    .platter-row { display: flex; gap: 14px; align-items: center; justify-content: center; padding: 4px 0 2px; }
-    .bpm-big { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--bt-accent); text-shadow: 0 0 14px color-mix(in oklab, var(--bt-accent) 40%, transparent); }
-    .bpm-row { display: flex; gap: 10px; align-items: center; }
-    .bpm-slider { writing-mode: vertical-lr; direction: rtl; width: 22px; height: 70px; accent-color: var(--bt-accent); }
-    .bpm-num { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.1rem; color: var(--bt-accent); text-shadow: 0 0 10px color-mix(in oklab, var(--bt-accent) 40%, transparent); }
-    .transport { display: flex; gap: 8px; }
-    .btn { border: 1px solid var(--bt-border); background: var(--bt-card); color: inherit; border-radius: 8px; padding: 5px 9px; cursor: pointer; font: inherit; font-size: 0.9rem; }
+
+    .face { display: grid; grid-template-columns: 1fr 64px; gap: 12px; align-items: stretch; }
+    .left-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .bpm-big { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--bt-accent); text-shadow: 0 0 14px color-mix(in oklab, var(--bt-accent) 40%, transparent); line-height: 1; }
+    .transport-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
+    .slot { border: 1px dashed var(--bt-border); border-radius: 8px; opacity: 0.4; }
+
+    .fader-col { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0; }
+    .fader-scale { font-size: 0.65rem; opacity: 0.55; font-variant-numeric: tabular-nums; }
+    .pitch-value { font-size: 0.75rem; opacity: 0.85; font-variant-numeric: tabular-nums; color: var(--bt-accent); margin-top: 2px; }
+    .pitch-fader { writing-mode: vertical-lr; direction: rtl; width: 26px; height: 140px; accent-color: var(--bt-accent); }
+
+    .row-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.55; width: 44px; }
+    .row-val { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 0.85rem; color: var(--bt-accent); width: 44px; text-align: right; }
+    .bpm-row, .mix-row { display: flex; gap: 10px; align-items: center; }
+    .bpm-slider, .mix-row input[type='range'] { flex: 1; accent-color: var(--bt-accent); }
+
+    .bend-row { display: flex; align-items: center; gap: 8px; }
+    .bend-mid { flex: 1; text-align: center; font-size: 0.68rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.12em; }
+
+    .btn { border: 1px solid var(--bt-border); background: var(--bt-card); color: inherit; border-radius: 8px; padding: 7px 10px; cursor: pointer; font: inherit; font-size: 0.88rem; }
+    .btn { background: var(--bt-card); }
     .btn:hover { border-color: var(--bt-accent); }
     .btn.active { background: var(--bt-accent); color: var(--bt-a-contrast); border-color: var(--bt-accent); box-shadow: 0 0 10px color-mix(in oklab, var(--bt-accent) 35%, transparent); }
-    .btn.play { flex: 1; }
+    .btn:active { transform: translateY(1px); }
+    .btn.play { grid-column: span 2; }
     .btn.play.active { animation: bt-pulse 1.6s ease-in-out infinite; }
     @keyframes bt-pulse { 0%, 100% { box-shadow: 0 0 6px color-mix(in oklab, var(--bt-accent) 30%, transparent); } 50% { box-shadow: 0 0 14px color-mix(in oklab, var(--bt-accent) 55%, transparent); } }
-    .fader-row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center; }
-    .pitch-fader { accent-color: var(--bt-a); }
-    .fader-label, .pitch-value { font-size: 0.8rem; opacity: 0.8; font-variant-numeric: tabular-nums; }
-    .nudge-row { display: flex; align-items: center; gap: 8px; }
-    .nudge-mid { flex: 1; text-align: center; font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.1em; }
-    .mix-row { display: flex; gap: 8px; align-items: center; }
-    .mix-row label { flex: 1; display: flex; gap: 8px; align-items: center; font-size: 0.85rem; }
-    .kit-row { display: flex; gap: 8px; align-items: center; font-size: 0.85rem; }
-    select { background: var(--bt-card); color: inherit; border: 1px solid var(--bt-border); border-radius: 8px; padding: 6px 8px; font: inherit; }
-    .btn { background: var(--bt-card); }
-    .btn:active { transform: translateY(1px); }
-    input[type='range'] { flex: 1; }
+
+    .kit-row { display: flex; gap: 10px; align-items: center; }
+    select { flex: 1; background: var(--bt-card); color: inherit; border: 1px solid var(--bt-border); border-radius: 8px; padding: 6px 8px; font: inherit; }
   `,
 })
 export class DeckPanel {

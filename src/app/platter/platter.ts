@@ -23,7 +23,7 @@ import { TrainerService } from '../trainer.service';
     </div>
   `,
   styles: `
-    .platter { width: 90px; height: 90px; flex-shrink: 0; }
+    .platter { width: 110px; height: 110px; flex-shrink: 0; }
     .disc {
       position: relative; width: 100%; height: 100%;
       border-radius: 50%;

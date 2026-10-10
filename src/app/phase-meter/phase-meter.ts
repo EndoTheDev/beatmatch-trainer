@@ -30,7 +30,7 @@ import { TrainerService } from '../trainer.service';
     .row { display: flex; align-items: center; gap: 12px; }
     .tag { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; opacity: 0.55; width: 14px; }
     .blocks { display: flex; gap: 6px; flex: 1; }
-    .block { flex: 1; height: 11px; border-radius: 3px; background: var(--bt-block-off); transition: background 60ms linear, box-shadow 60ms linear; }
+    .block { flex: 1; height: 11px; border-radius: 3px; background: var(--bt-block-off); box-shadow: inset 0 1px 3px rgba(0,0,0,0.35); transition: background 60ms linear, box-shadow 60ms linear; }
     .block.on { background: var(--bt-accent); box-shadow: 0 0 8px color-mix(in oklab, var(--bt-accent) 55%, transparent); }
     .inphase .block.on { background: var(--bt-ok); box-shadow: 0 0 10px color-mix(in oklab, var(--bt-ok) 60%, transparent); }
     .leading .block.on { background: var(--bt-accent); }
