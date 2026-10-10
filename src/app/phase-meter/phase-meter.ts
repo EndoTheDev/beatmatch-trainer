@@ -1,27 +1,62 @@
 import { Component, inject, ChangeDetectionStrategy, computed } from '@angular/core';
 import { TrainerService } from '../trainer.service';
 
+/**
+ * Pioneer CDJ-style beat phase display: two rows of 4 blocks (quarter-beat
+ * resolution), one row per deck. Each row sweeps independently; when the
+ * decks are locked, both rows flash in perfect sync. Drift direction is
+ * readable as the leading row glowing while the lagging row dims.
+ */
 @Component({
   selector: 'bt-phase-meter',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [],
   template: `
-    <div class="meter" [attr.aria-label]="'phase difference ' + diff() + ' beats'">
-      <div class="track">
-        <div class="marker" [style.left.%]="markerPos()"></div>
-      </div>
-      <div class="center-notch"></div>
+    <div class="pioneer" [attr.aria-label]="'beat phase, difference ' + trainer.phaseDiff() + ' beats'">
+      @for (row of rows(); track row.deck) {
+        <div class="row">
+          <span class="tag">{{ row.deck }}</span>
+          <span class="blocks" [class.leading]="row.leading" [class.inphase]="trainer.inPhase()">
+            @for (lit of row.lit; track $index) {
+              <span class="block" [class.on]="lit"></span>
+            }
+          </span>
+        </div>
+      }
     </div>
   `,
   styles: `
-    .meter { position: relative; height: 18px; margin: 8px 0; }
-    .track { position: absolute; inset: 0; border: 1px solid var(--bt-border); border-radius: 9px; background: var(--bt-card); overflow: hidden; }
-    .marker { position: absolute; top: 0; bottom: 0; width: 14px; margin-left: -7px; border-radius: 4px; background: var(--bt-a); transition: left 60ms linear; }
-    .center-notch { position: absolute; left: 50%; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--bt-fg); opacity: 0.6; }
+    .pioneer { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 14px; padding: 12px 14px; border: 1px solid var(--bt-border); border-radius: 10px; background: var(--bt-well); }
+    .row { display: flex; align-items: center; gap: 12px; }
+    .tag { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; opacity: 0.55; width: 14px; }
+    .blocks { display: flex; gap: 6px; flex: 1; }
+    .block { flex: 1; height: 14px; border-radius: 3px; background: var(--bt-block-off); transition: background 60ms linear, box-shadow 60ms linear; }
+    .block.on { background: var(--bt-accent); box-shadow: 0 0 8px color-mix(in oklab, var(--bt-accent) 55%, transparent); }
+    .inphase .block.on { background: var(--bt-ok); box-shadow: 0 0 10px color-mix(in oklab, var(--bt-ok) 60%, transparent); }
+    .leading .block.on { background: var(--bt-accent); }
+    .blocks:not(.leading) .block.on { opacity: 0.75; }
   `,
 })
 export class PhaseMeter {
   readonly trainer = inject(TrainerService);
-  readonly diff = this.trainer.phaseDiff;
-  readonly markerPos = computed(() => 50 + (this.diff() / 0.5) * 45);
+
+  /**
+   * Two rows, each sweeping its 4 blocks per beat of its own deck.
+   * ponytail: computed re-evaluates whenever the service's position signals
+   * change (every rAF tick while decks run). Lit blocks as plain booleans.
+   */
+  readonly rows = computed(() => {
+    const diff = this.trainer.phaseDiff();
+    const aPos = this.trainer.deckAPos();
+    const bPos = this.trainer.deckBPos();
+    const bAhead = diff > 0;
+    return [this.mkRow('A', aPos, !bAhead), this.mkRow('B', bPos, bAhead)];
+  });
+
+  private mkRow(deck: string, pos: number, leading: boolean) {
+    const frac = pos - Math.floor(pos); // 0..1 within the beat
+    const active = Math.floor(frac * 4) % 4;
+    const lit = [0, 1, 2, 3].map((i) => i === active);
+    return { deck, lit, leading };
+  }
 }

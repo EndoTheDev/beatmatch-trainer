@@ -11,14 +11,16 @@ import { PhaseMeter } from './phase-meter/phase-meter';
   template: `
     <main class="wrap">
       <header class="head">
-        <h1>beatmatch trainer</h1>
-        <p class="sub">two decks, your ears, no sync button.</p>
+        <div>
+          <h1>beatmatch trainer</h1>
+          <p class="sub">two decks, your ears, no sync button.</p>
+        </div>
+        <button type="button" class="btn theme" (click)="cycleTheme()" [attr.aria-label]="'theme: ' + theme()">
+          {{ theme() }}
+        </button>
       </header>
 
       <nav class="meta-row">
-        <button type="button" class="btn" (click)="cycleTheme()" [attr.aria-label]="'theme: ' + theme()">
-          theme: {{ theme() }}
-        </button>
         <label class="rate">
           bend rate {{ trainer.bendRate() | number: '1.1-1' }}%/s
           <input type="range" min="0.5" max="4" step="0.1" [value]="trainer.bendRate()"
@@ -95,15 +97,39 @@ import { PhaseMeter } from './phase-meter/phase-meter';
     </main>
   `,
   styles: `
-    :host { --bt-fg: #e8e8e8; --bt-a: #c96f4a; --bt-a-contrast: #1a1a1a; --bt-border: #3a3a3a; --bt-card: #232323; --bt-bg: #141414; }
-    @media (prefers-color-scheme: light) {
-      :host:not(.bt-dark) { --bt-fg: #1a1a1a; --bt-a: #b85c38; --bt-a-contrast: #fff; --bt-border: #ccc; --bt-card: #f5f5f5; --bt-bg: #fafafa; }
+    :host {
+      --bt-fg: #e6e2dc; --bt-accent: #e8833a; --bt-accent-dim: #8a4e23; --bt-a: var(--bt-accent);
+      --bt-a-contrast: #1a1512; --bt-ok: #4ec96b;
+      --bt-border: #35312b; --bt-card: #232019; --bt-well: #1a1712; --bt-block-off: #2c2822;
+      --bt-bg: #12100c;
+      font-family: system-ui, sans-serif;
     }
-    :host.bt-light { --bt-fg: #1a1a1a; --bt-a: #b85c38; --bt-a-contrast: #fff; --bt-border: #ccc; --bt-card: #f5f5f5; --bt-bg: #fafafa; }
-    :host.bt-dark { --bt-fg: #e8e8e8; --bt-a: #c96f4a; --bt-a-contrast: #1a1a1a; --bt-border: #3a3a3a; --bt-card: #232323; --bt-bg: #141414; }
+    @media (prefers-color-scheme: light) {
+      :host:not(.bt-dark) {
+        --bt-fg: #2a2520; --bt-accent: #d06a1e; --bt-accent-dim: #b8895f; --bt-a: var(--bt-accent);
+        --bt-a-contrast: #fff; --bt-ok: #2e9e4a;
+        --bt-border: #d8d2c8; --bt-card: #f2efe9; --bt-well: #e4dfd5; --bt-block-off: #d0c9bc;
+        --bt-bg: #faf8f4;
+      }
+    }
+    :host.bt-light {
+      --bt-fg: #2a2520; --bt-accent: #d06a1e; --bt-accent-dim: #b8895f; --bt-a: var(--bt-accent);
+      --bt-a-contrast: #fff; --bt-ok: #2e9e4a;
+      --bt-border: #d8d2c8; --bt-card: #f2efe9; --bt-well: #e4dfd5; --bt-block-off: #d0c9bc;
+      --bt-bg: #faf8f4;
+    }
+    :host.bt-dark {
+      --bt-fg: #e6e2dc; --bt-accent: #e8833a; --bt-accent-dim: #8a4e23; --bt-a: var(--bt-accent);
+      --bt-a-contrast: #1a1512; --bt-ok: #4ec96b;
+      --bt-border: #35312b; --bt-card: #232019; --bt-well: #1a1712; --bt-block-off: #2c2822;
+      --bt-bg: #12100c;
+    }
     :host { display: block; min-height: 100vh; background: var(--bt-bg); color: var(--bt-fg); font-family: system-ui, sans-serif; }
     .wrap { max-width: 780px; margin: 0 auto; padding: 20px 16px 40px; }
+    :host { background: var(--bt-bg); }
+    .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
     .head h1 { margin: 0 0 2px; font-size: 1.5rem; letter-spacing: 0.02em; }
+    .theme { text-transform: capitalize; }
     .sub { margin: 0 0 16px; opacity: 0.6; font-size: 0.9rem; }
     .meta-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
     .mode-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }

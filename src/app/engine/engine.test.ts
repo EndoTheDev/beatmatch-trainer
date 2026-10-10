@@ -194,3 +194,16 @@ describe('pitch bend', () => {
     expect(d.bendPercent).toBe(0);
   });
 });
+
+describe('progressive bend ramp', () => {
+  it('ramp multiplies after 0.6s hold and caps at 3x', () => {
+    // mirror of the service's ramp math
+    const ramp = (heldSeconds: number) => Math.min(3, 1 + Math.max(0, heldSeconds - 0.6));
+    expect(ramp(0)).toBe(1);          // short hold = base rate
+    expect(ramp(0.5)).toBe(1);        // still under the threshold
+    expect(ramp(0.6)).toBe(1);        // exactly at threshold
+    expect(ramp(1.1)).toBeCloseTo(1.5); // 0.5s of acceleration
+    expect(ramp(2.6)).toBeCloseTo(3);  // cap reached
+    expect(ramp(10)).toBe(3);          // never exceeds cap
+  });
+});

@@ -38,11 +38,18 @@ export class TrainerService {
   private sdB: ScheduledDeck | null = null;
   private masterA: GainNode | null = null;
   private masterB: GainNode | null = null;
+  // rAF loop drives tick + signal updates + progressive bend ramp
   private rafId = 0;
+  private bendHoldSince = new Map<'A' | 'B', number>(); // deck -> hold start ms
+  private bendDir = new Map<'A' | 'B', 1 | -1>(); // deck -> bend direction
   private lastTick = 0;
   private roundSamples: boolean[] = [];
   private roundStart = 0;
   private hiddenOffsetB = 0; // challenge: secret pitch offset on B (percent)
+
+  /** live deck positions for the phase display */
+  readonly deckAPos = signal<number>(0);
+  readonly deckBPos = signal<number>(0);
 
   roundResult = signal<{ percent: number; grade: string; seconds: number } | null>(null);
   readonly roundRunning = signal<boolean>(false);
@@ -73,11 +80,27 @@ export class TrainerService {
       const ctx = this.ctx;
       if (!ctx || !this.sdA || !this.sdB) return;
       const { aPos, bPos } = tick(this.sdA, this.sdB, ctx);
+      this.deckAPos.set(aPos);
+      this.deckBPos.set(bPos);
       const diff = phaseDiff(aPos, bPos);
       this.phaseDiff.set(diff);
       this.inPhase.set(isInPhase(diff));
       if (this.roundRunning()) {
         this.roundSamples.push(isInPhase(diff));
+      }
+      // progressive bend: accelerate holds after 0.6s, cap at 3x slider rate
+      for (const side of ['A', 'B'] as const) {
+        const since = this.bendHoldSince.get(side);
+        if (since !== undefined) {
+          const held = (performance.now() - since) / 1000;
+          const mult = Math.min(3, 1 + Math.max(0, held - 0.6));
+          const dir = Math.sign(this.bendDir.get(side) ?? 1);
+          const sd = side === 'A' ? this.sdA : this.sdB;
+          if (sd && this.ctx) {
+            reanchor(sd, this.ctx.currentTime);
+            setBend(sd.state, dir * this.bendRate() * mult);
+          }
+        }
       }
       this.rafId = requestAnimationFrame(loop);
     };
@@ -166,11 +189,14 @@ export class TrainerService {
   bendStart(side: 'A' | 'B', direction: 1 | -1): void {
     const sd = side === 'A' ? this.sdA! : this.sdB!;
     if (this.ctx) reanchor(sd, this.ctx.currentTime);
+    this.bendDir.set(side, direction);
+    this.bendHoldSince.set(side, performance.now());
     setBend(sd.state, direction * this.bendRate());
   }
 
   bendEnd(side: 'A' | 'B'): void {
     const sd = side === 'A' ? this.sdA! : this.sdB!;
+    this.bendHoldSince.delete(side);
     if (!sd) return; // deck never initialized - nothing playing anyway
     if (this.ctx) reanchor(sd, this.ctx.currentTime);
     setBend(sd.state, 0);

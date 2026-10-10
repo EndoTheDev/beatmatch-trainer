@@ -75,17 +75,20 @@ import { TrainerService, DeckUiState } from '../trainer.service';
     </section>
   `,
   styles: `
-    .deck { border: 1px solid var(--bt-border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 250px; }
-    .deck-a { border-color: color-mix(in oklab, var(--bt-a) 60%, var(--bt-border)); }
+    .deck { border: 1px solid var(--bt-border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 250px; background: var(--bt-well); box-shadow: inset 0 2px 8px rgba(0,0,0,0.25); }
+    .deck-a { border-color: color-mix(in oklab, var(--bt-accent) 45%, var(--bt-border)); }
     header { display: flex; justify-content: space-between; align-items: baseline; }
     h2 { margin: 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.08em; }
-    .bpm { font-variant-numeric: tabular-nums; }
+    .bpm { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.05rem; color: var(--bt-accent); text-shadow: 0 0 10px color-mix(in oklab, var(--bt-accent) 40%, transparent); }
+    .bpm-hidden { opacity: 0.4; color: var(--bt-fg); text-shadow: none; }
     .bpm-hidden { opacity: 0.4; }
     .transport { display: flex; gap: 8px; }
     .btn { border: 1px solid var(--bt-border); background: var(--bt-card); color: inherit; border-radius: 8px; padding: 8px 12px; cursor: pointer; font: inherit; }
-    .btn:hover { border-color: var(--bt-a); }
-    .btn.active { background: var(--bt-a); color: var(--bt-a-contrast); border-color: var(--bt-a); }
+    .btn:hover { border-color: var(--bt-accent); }
+    .btn.active { background: var(--bt-accent); color: var(--bt-a-contrast); border-color: var(--bt-accent); box-shadow: 0 0 10px color-mix(in oklab, var(--bt-accent) 35%, transparent); }
     .btn.play { flex: 1; }
+    .btn.play.active { animation: bt-pulse 1.6s ease-in-out infinite; }
+    @keyframes bt-pulse { 0%, 100% { box-shadow: 0 0 6px color-mix(in oklab, var(--bt-accent) 30%, transparent); } 50% { box-shadow: 0 0 14px color-mix(in oklab, var(--bt-accent) 55%, transparent); } }
     .fader-row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center; }
     .pitch-fader { accent-color: var(--bt-a); }
     .fader-label, .pitch-value { font-size: 0.8rem; opacity: 0.8; font-variant-numeric: tabular-nums; }
@@ -95,6 +98,8 @@ import { TrainerService, DeckUiState } from '../trainer.service';
     .mix-row label { flex: 1; display: flex; gap: 8px; align-items: center; font-size: 0.85rem; }
     .kit-row { display: flex; gap: 8px; align-items: center; font-size: 0.85rem; }
     select { background: var(--bt-card); color: inherit; border: 1px solid var(--bt-border); border-radius: 8px; padding: 6px 8px; font: inherit; }
+    .btn { background: var(--bt-card); }
+    .btn:active { transform: translateY(1px); }
     input[type='range'] { flex: 1; }
   `,
 })
