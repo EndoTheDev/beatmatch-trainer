@@ -26,7 +26,7 @@ import { TrainerService } from '../trainer.service';
     </div>
   `,
   styles: `
-    .pioneer { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 8px; padding: 8px 12px; border: 1px solid var(--bt-border); border-radius: 10px; background: var(--bt-well); }
+    .pioneer { display: flex; flex-direction: column; gap: 5px; margin: 0 0 10px; padding: 10px 14px; border: 1px solid var(--bt-border); border-radius: 10px; background: var(--bt-well); }
     .row { display: flex; align-items: center; gap: 12px; }
     .tag { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; opacity: 0.55; width: 14px; }
     .blocks { display: flex; gap: 6px; flex: 1; }

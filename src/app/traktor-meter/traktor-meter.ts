@@ -26,7 +26,7 @@ import { TrainerService } from '../trainer.service';
     </div>
   `,
   styles: `
-    .traktor { margin: 0 0 8px; padding: 6px 12px; border: 1px solid var(--bt-border); border-radius: 10px; background: var(--bt-well); }
+    .traktor { margin: 0 0 18px; padding: 8px 14px; border: 1px solid var(--bt-border); border-radius: 10px; background: var(--bt-well); }
     .scale { display: flex; justify-content: space-between; font-size: 0.7rem; opacity: 0.55; margin-bottom: 6px; }
     .track { position: relative; height: 16px; border-radius: 8px; background: var(--bt-block-off); overflow: visible; }
     .zone { position: absolute; left: 45%; width: 10%; top: 0; bottom: 0; border-radius: 8px; background: color-mix(in oklab, var(--bt-ok) 18%, transparent); transition: background 100ms; }

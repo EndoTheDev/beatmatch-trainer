@@ -109,12 +109,13 @@ import { ScrollWheel } from './scroll-wheel.directive';
   `,
   styles: `
     :host { display: block; color: var(--bt-fg); font-family: system-ui, sans-serif; }
-    .wrap { max-width: 860px; margin: 0 auto; padding: 12px 14px 20px; }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 18px 16px 26px; }
     .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
     .head h1 { margin: 0; font-size: 1.3rem; letter-spacing: 0.02em; }
     .theme { text-transform: capitalize; }
     .sub { margin: 0; opacity: 0.6; font-size: 0.82rem; }
-    .mode-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+    .head { padding-bottom: 14px; }
+    .mode-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 0 18px; }
     .rate { display: flex; gap: 8px; align-items: center; font-size: 0.85rem; }
     .rate input { accent-color: var(--bt-a); width: 120px; }
     .btn { border: 1px solid var(--bt-border); background: var(--bt-card); color: inherit; border-radius: 8px; padding: 7px 12px; cursor: pointer; font: inherit; }
@@ -122,15 +123,15 @@ import { ScrollWheel } from './scroll-wheel.directive';
     .btn.active, .btn.start { background: var(--bt-a); color: var(--bt-a-contrast); border-color: var(--bt-a); }
     .level { display: flex; gap: 8px; align-items: center; font-size: 0.85rem; }
     .level input { accent-color: var(--bt-a); }
-    .result { display: flex; gap: 14px; align-items: center; padding: 6px 12px; border: 1px solid var(--bt-border); border-radius: 10px; margin-bottom: 8px; }
+    .result { display: flex; gap: 14px; align-items: center; padding: 8px 12px; border: 1px solid var(--bt-border); border-radius: 10px; margin-bottom: 14px; }
     .grade { font-size: 1.3rem; font-weight: 700; }
     .grade[data-grade='S'] { color: #e5c07b; } .grade[data-grade='A'] { color: #98c379; }
     .grade[data-grade='B'] { color: #61afef; } .grade[data-grade='C'] { color: #e06c75; } .grade[data-grade='F'] { color: #888; }
     .percent { font-variant-numeric: tabular-nums; }
     .time { opacity: 0.6; font-variant-numeric: tabular-nums; }
-    .decks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .decks { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     @media (max-width: 640px) { .decks { grid-template-columns: 1fr; } }
-    .foot { margin-top: 10px; font-size: 0.72rem; opacity: 0.55; line-height: 1.4; }
+    .foot { margin-top: 16px; font-size: 0.72rem; opacity: 0.55; line-height: 1.4; }
   `,
 })
 export class App {

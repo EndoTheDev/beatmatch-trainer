@@ -1,6 +1,7 @@
 import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ScrollWheel } from '../scroll-wheel.directive';
+import { Platter } from '../platter/platter';
 import { DecimalPipe } from '@angular/common';
 import { TrainerService, DeckUiState } from '../trainer.service';
 
@@ -11,10 +12,10 @@ import { TrainerService, DeckUiState } from '../trainer.service';
 @Component({
   selector: 'bt-deck-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, DecimalPipe, ScrollWheel],
+  imports: [FormsModule, DecimalPipe, ScrollWheel, Platter],
   template: `
     <section class="deck" [class.deck-a]="side() === 'A'">
-      <header>
+      <header class="deck-head">
         <h2>deck {{ side() }}</h2>
         @if (state(); as s) {
           @if (!hideBpm()) {
@@ -24,6 +25,19 @@ import { TrainerService, DeckUiState } from '../trainer.service';
           }
         }
       </header>
+
+      <div class="platter-row">
+        <bt-platter [side]="side()" />
+        <div class="bpm-big">
+          @if (state(); as s) {
+            @if (!hideBpm()) {
+              {{ s.bpm | number: '1.0-1' }}
+            } @else {
+              --.-
+            }
+          }
+        </div>
+      </div>
 
       <div class="bpm-row">
         <input
@@ -93,6 +107,8 @@ import { TrainerService, DeckUiState } from '../trainer.service';
     .bpm { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.05rem; color: var(--bt-accent); text-shadow: 0 0 10px color-mix(in oklab, var(--bt-accent) 40%, transparent); }
     .bpm-hidden { opacity: 0.4; color: var(--bt-fg); text-shadow: none; }
     .bpm-hidden { opacity: 0.4; }
+    .platter-row { display: flex; gap: 14px; align-items: center; justify-content: center; padding: 4px 0 2px; }
+    .bpm-big { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--bt-accent); text-shadow: 0 0 14px color-mix(in oklab, var(--bt-accent) 40%, transparent); }
     .bpm-row { display: flex; gap: 10px; align-items: center; }
     .bpm-slider { writing-mode: vertical-lr; direction: rtl; width: 22px; height: 70px; accent-color: var(--bt-accent); }
     .bpm-num { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.1rem; color: var(--bt-accent); text-shadow: 0 0 10px color-mix(in oklab, var(--bt-accent) 40%, transparent); }
