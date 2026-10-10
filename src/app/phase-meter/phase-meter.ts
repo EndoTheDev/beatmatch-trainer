@@ -26,11 +26,11 @@ import { TrainerService } from '../trainer.service';
     </div>
   `,
   styles: `
-    .pioneer { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 14px; padding: 12px 14px; border: 1px solid var(--bt-border); border-radius: 10px; background: var(--bt-well); }
+    .pioneer { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 8px; padding: 8px 12px; border: 1px solid var(--bt-border); border-radius: 10px; background: var(--bt-well); }
     .row { display: flex; align-items: center; gap: 12px; }
     .tag { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; opacity: 0.55; width: 14px; }
     .blocks { display: flex; gap: 6px; flex: 1; }
-    .block { flex: 1; height: 14px; border-radius: 3px; background: var(--bt-block-off); transition: background 60ms linear, box-shadow 60ms linear; }
+    .block { flex: 1; height: 11px; border-radius: 3px; background: var(--bt-block-off); transition: background 60ms linear, box-shadow 60ms linear; }
     .block.on { background: var(--bt-accent); box-shadow: 0 0 8px color-mix(in oklab, var(--bt-accent) 55%, transparent); }
     .inphase .block.on { background: var(--bt-ok); box-shadow: 0 0 10px color-mix(in oklab, var(--bt-ok) 60%, transparent); }
     .leading .block.on { background: var(--bt-accent); }

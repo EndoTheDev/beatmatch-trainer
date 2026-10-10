@@ -1,1 +1,68 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global document theme - the app component's :host never reaches the body,
+   leaving browser-default white margins around the app. Vars live HERE;
+   the app component reads them. Theme classes toggle on documentElement
+   (:root) - CSS vars cascade down through body into the app. */
+
+:root {
+  --bt-fg: #e6e2dc;
+  --bt-accent: #e8833a;
+  --bt-accent-dim: #8a4e23;
+  --bt-a: var(--bt-accent);
+  --bt-a-contrast: #1a1512;
+  --bt-ok: #4ec96b;
+  --bt-border: #35312b;
+  --bt-card: #232019;
+  --bt-well: #1a1712;
+  --bt-block-off: #2c2822;
+  --bt-bg: #12100c;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not(.bt-dark):not(.bt-light) {
+    --bt-fg: #2a2520;
+    --bt-accent: #d06a1e;
+    --bt-accent-dim: #b8895f;
+    --bt-a: var(--bt-accent);
+    --bt-a-contrast: #fff;
+    --bt-ok: #2e9e4a;
+    --bt-border: #d8d2c8;
+    --bt-card: #f2efe9;
+    --bt-well: #e4dfd5;
+    --bt-block-off: #d0c9bc;
+    --bt-bg: #faf8f4;
+  }
+}
+
+:root.bt-light {
+  --bt-fg: #2a2520;
+  --bt-accent: #d06a1e;
+  --bt-accent-dim: #b8895f;
+  --bt-a: var(--bt-accent);
+  --bt-a-contrast: #fff;
+  --bt-ok: #2e9e4a;
+  --bt-border: #d8d2c8;
+  --bt-card: #f2efe9;
+  --bt-well: #e4dfd5;
+  --bt-block-off: #d0c9bc;
+  --bt-bg: #faf8f4;
+}
+
+:root.bt-dark {
+  --bt-fg: #e6e2dc;
+  --bt-accent: #e8833a;
+  --bt-accent-dim: #8a4e23;
+  --bt-a: var(--bt-accent);
+  --bt-a-contrast: #1a1512;
+  --bt-ok: #4ec96b;
+  --bt-border: #35312b;
+  --bt-card: #232019;
+  --bt-well: #1a1712;
+  --bt-block-off: #2c2822;
+  --bt-bg: #12100c;
+}
+
+body {
+  margin: 0;
+  background: var(--bt-bg);
+  color: var(--bt-fg);
+}
