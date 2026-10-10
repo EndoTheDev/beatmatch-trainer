@@ -207,3 +207,15 @@ describe('progressive bend ramp', () => {
     expect(ramp(10)).toBe(3);          // never exceeds cap
   });
 });
+
+describe('pioneer row mapping (beat-in-bar)', () => {
+  it('one block per beat, cycling the bar', () => {
+    const active = (pos: number) => Math.floor(pos) % 4;
+    expect(active(0.0)).toBe(0);   // beat 1
+    expect(active(0.99)).toBe(0);  // still beat 1 (not swept within the beat!)
+    expect(active(1.0)).toBe(1);  // beat 2
+    expect(active(2.7)).toBe(2);  // beat 3
+    expect(active(4.0)).toBe(0);  // new bar
+    expect(active(8.2)).toBe(0);  // two bars later, beat 1
+  });
+});

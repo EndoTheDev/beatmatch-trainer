@@ -54,8 +54,8 @@ export class PhaseMeter {
   });
 
   private mkRow(deck: string, pos: number, leading: boolean) {
-    const frac = pos - Math.floor(pos); // 0..1 within the beat
-    const active = Math.floor(frac * 4) % 4;
+    // one block = one BEAT; the row lights the current beat-in-bar (1..4 cycle)
+    const active = Math.floor(pos) % 4;
     const lit = [0, 1, 2, 3].map((i) => i === active);
     return { deck, lit, leading };
   }

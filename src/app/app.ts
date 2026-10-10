@@ -3,11 +3,13 @@ import { DecimalPipe } from '@angular/common';
 import { TrainerService } from './trainer.service';
 import { DeckPanel } from './deck-panel/deck-panel';
 import { PhaseMeter } from './phase-meter/phase-meter';
+import { TraktorMeter } from './traktor-meter/traktor-meter';
+import { ScrollWheel } from './scroll-wheel.directive';
 
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DeckPanel, PhaseMeter, DecimalPipe],
+  imports: [DeckPanel, PhaseMeter, TraktorMeter, DecimalPipe, ScrollWheel],
   template: `
     <main class="wrap">
       <header class="head">
@@ -19,14 +21,6 @@ import { PhaseMeter } from './phase-meter/phase-meter';
           {{ theme() }}
         </button>
       </header>
-
-      <nav class="meta-row">
-        <label class="rate">
-          bend rate {{ trainer.bendRate() | number: '1.1-1' }}%/s
-          <input type="range" min="0.5" max="4" step="0.1" [value]="trainer.bendRate()"
-            (input)="onBendRate($event)" aria-label="bend rate, percent per second">
-        </label>
-      </nav>
 
       <nav class="mode-row">
         <button type="button" class="btn" [class.active]="!trainer.challenge()" (click)="setMode(false)">practice</button>
@@ -46,9 +40,17 @@ import { PhaseMeter } from './phase-meter/phase-meter';
             {{ trainer.blindMeter() ? 'meter hidden' : 'meter shown' }}
           </button>
         }
+        <button type="button" class="btn" [class.active]="showPioneer()" (click)="togglePioneer()">pioneer meter</button>
+        <button type="button" class="btn" [class.active]="showTraktor()" (click)="toggleTraktor()">traktor meter</button>
+        <label class="rate">
+          bend {{ trainer.bendRate() | number: '1.1-1' }}%/s
+          <input type="range" min="0.5" max="4" step="0.1" [value]="trainer.bendRate()"
+            btWheel [btWheelStep]="0.1" (input)="onBendRate($event)" (wheelChange)="trainer.setBendRate($event)"
+            aria-label="bend rate, percent per second">
+        </label>
       </nav>
 
-      @if (trainer.roundResult(); as r) {
+      @if (trainer.challenge() && trainer.roundResult(); as r) {
         <section class="result" aria-live="polite">
           <span class="grade" [attr.data-grade]="r.grade">{{ r.grade }}</span>
           <span class="percent">{{ r.percent | number: '1.0-1' }}% in phase</span>
@@ -57,7 +59,12 @@ import { PhaseMeter } from './phase-meter/phase-meter';
       }
 
       @if (!trainer.blindMeter()) {
-        <bt-phase-meter />
+        @if (showPioneer()) {
+          <bt-phase-meter />
+        }
+        @if (showTraktor()) {
+          <bt-traktor-meter />
+        }
       }
 
       <div class="decks">
@@ -68,6 +75,8 @@ import { PhaseMeter } from './phase-meter/phase-meter';
           [kits]="trainer.kits"
           [hideBpm]="trainer.challenge()"
           (pitchChange)="onPitch($event)"
+          (bpmChange)="onBpm($event)"
+          (onWheelBpm)="onBpm($event)"
           (volumeChange)="onVolume($event)"
           (kitChange)="onKit($event)"
           (transport)="onTransport($event)"
@@ -82,6 +91,8 @@ import { PhaseMeter } from './phase-meter/phase-meter';
           [kits]="trainer.kits"
           [hideBpm]="trainer.challenge()"
           (pitchChange)="onPitch($event)"
+          (bpmChange)="onBpm($event)"
+          (onWheelBpm)="onBpm($event)"
           (volumeChange)="onVolume($event)"
           (kitChange)="onKit($event)"
           (transport)="onTransport($event)"
@@ -105,20 +116,20 @@ import { PhaseMeter } from './phase-meter/phase-meter';
       font-family: system-ui, sans-serif;
     }
     @media (prefers-color-scheme: light) {
-      :host:not(.bt-dark) {
+      :host-context(body:not(.bt-dark):not(.bt-light)) {
         --bt-fg: #2a2520; --bt-accent: #d06a1e; --bt-accent-dim: #b8895f; --bt-a: var(--bt-accent);
         --bt-a-contrast: #fff; --bt-ok: #2e9e4a;
         --bt-border: #d8d2c8; --bt-card: #f2efe9; --bt-well: #e4dfd5; --bt-block-off: #d0c9bc;
         --bt-bg: #faf8f4;
       }
     }
-    :host.bt-light {
+    :host-context(body.bt-light) {
       --bt-fg: #2a2520; --bt-accent: #d06a1e; --bt-accent-dim: #b8895f; --bt-a: var(--bt-accent);
       --bt-a-contrast: #fff; --bt-ok: #2e9e4a;
       --bt-border: #d8d2c8; --bt-card: #f2efe9; --bt-well: #e4dfd5; --bt-block-off: #d0c9bc;
       --bt-bg: #faf8f4;
     }
-    :host.bt-dark {
+    :host-context(body.bt-dark) {
       --bt-fg: #e6e2dc; --bt-accent: #e8833a; --bt-accent-dim: #8a4e23; --bt-a: var(--bt-accent);
       --bt-a-contrast: #1a1512; --bt-ok: #4ec96b;
       --bt-border: #35312b; --bt-card: #232019; --bt-well: #1a1712; --bt-block-off: #2c2822;
@@ -153,6 +164,9 @@ import { PhaseMeter } from './phase-meter/phase-meter';
 })
 export class App {
   readonly trainer = inject(TrainerService);
+  readonly showPioneer = signal<boolean>(localStorage.getItem('bt-meter-pioneer') !== 'off');
+  readonly showTraktor = signal<boolean>(localStorage.getItem('bt-meter-traktor') !== 'off');
+
   readonly theme = signal<'auto' | 'light' | 'dark'>(
     (localStorage.getItem('bt-theme') as 'auto' | 'light' | 'dark') ?? 'auto',
   );
@@ -170,13 +184,16 @@ export class App {
   }
 
   private applyTheme(t: 'auto' | 'light' | 'dark') {
-    const doc = document.documentElement;
-    doc.classList.toggle('bt-light', t === 'light');
-    doc.classList.toggle('bt-dark', t === 'dark');
-    doc.style.colorScheme = t === 'auto' ? 'light dark' : t;
+    // classes go on BODY - the :host root never sees documentElement classes
+    document.body.classList.toggle('bt-light', t === 'light');
+    document.body.classList.toggle('bt-dark', t === 'dark');
+    document.body.style.colorScheme = t === 'auto' ? 'light dark' : t;
   }
 
   onBendRate(e: Event) { this.trainer.setBendRate(Number((e.target as HTMLInputElement).value)); }
+  togglePioneer() { this.showPioneer.update((v) => { localStorage.setItem('bt-meter-pioneer', v ? 'off' : 'on'); return !v; }); }
+  toggleTraktor() { this.showTraktor.update((v) => { localStorage.setItem('bt-meter-traktor', v ? 'off' : 'on'); return !v; }); }
+  onBpm(e: { side: 'A' | 'B'; value: number }) { this.trainer.setBpm(e.side, e.value); }
   onBendStart(e: { side: 'A' | 'B'; direction: 1 | -1 }) { this.trainer.bendStart(e.side, e.direction); }
   onBendEnd(side: 'A' | 'B') { this.trainer.bendEnd(side); }
 

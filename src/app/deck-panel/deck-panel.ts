@@ -1,5 +1,6 @@
 import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ScrollWheel } from '../scroll-wheel.directive';
 import { DecimalPipe } from '@angular/common';
 import { TrainerService, DeckUiState } from '../trainer.service';
 
@@ -10,7 +11,7 @@ import { TrainerService, DeckUiState } from '../trainer.service';
 @Component({
   selector: 'bt-deck-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, DecimalPipe],
+  imports: [FormsModule, DecimalPipe, ScrollWheel],
   template: `
     <section class="deck" [class.deck-a]="side() === 'A'">
       <header>
@@ -23,6 +24,16 @@ import { TrainerService, DeckUiState } from '../trainer.service';
           }
         }
       </header>
+
+      <div class="bpm-row">
+        <input
+          type="range" min="60" max="200" step="0.5" [value]="state()?.bpm ?? 124"
+          class="bpm-slider" btWheel [btWheelStep]="0.5"
+          (input)="onBpm($event)" (wheelChange)="onBpmVal($event)"
+          [attr.aria-label]="'deck ' + side() + ' tempo, bpm'"
+        >
+        <span class="bpm-num">{{ state()?.bpm | number: '1.0-1' }}</span>
+      </div>
 
       <div class="transport">
         <button type="button" class="btn play" (click)="play()" [class.active]="state()?.playing">
@@ -82,6 +93,9 @@ import { TrainerService, DeckUiState } from '../trainer.service';
     .bpm { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.05rem; color: var(--bt-accent); text-shadow: 0 0 10px color-mix(in oklab, var(--bt-accent) 40%, transparent); }
     .bpm-hidden { opacity: 0.4; color: var(--bt-fg); text-shadow: none; }
     .bpm-hidden { opacity: 0.4; }
+    .bpm-row { display: flex; gap: 10px; align-items: center; }
+    .bpm-slider { writing-mode: vertical-lr; direction: rtl; width: 24px; height: 90px; accent-color: var(--bt-accent); }
+    .bpm-num { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.1rem; color: var(--bt-accent); text-shadow: 0 0 10px color-mix(in oklab, var(--bt-accent) 40%, transparent); }
     .transport { display: flex; gap: 8px; }
     .btn { border: 1px solid var(--bt-border); background: var(--bt-card); color: inherit; border-radius: 8px; padding: 8px 12px; cursor: pointer; font: inherit; }
     .btn:hover { border-color: var(--bt-accent); }
@@ -111,6 +125,7 @@ export class DeckPanel {
   readonly kits = input<import('../engine/kits').DrumKit[]>([]);
   readonly pitchChange = output<{ side: 'A' | 'B'; value: number }>();
   readonly bpmChange = output<{ side: 'A' | 'B'; value: number }>();
+  readonly onWheelBpm = output<{ side: 'A' | 'B'; value: number }>();
   readonly volumeChange = output<{ side: 'A' | 'B'; value: number }>();
   readonly kitChange = output<{ side: 'A' | 'B'; value: string }>();
   readonly transport = output<{ side: 'A' | 'B'; action: 'play' | 'stop' | 'cue' }>();
@@ -118,6 +133,8 @@ export class DeckPanel {
   readonly bendEndOut = output<'A' | 'B'>();
   readonly muteToggle = output<'A' | 'B'>();
 
+  onBpm(e: Event) { this.bpmChange.emit({ side: this.side(), value: Number((e.target as HTMLInputElement).value) }); }
+  onBpmVal(v: number) { this.onWheelBpm.emit({ side: this.side(), value: v }); }
   onPitch(e: Event) { this.pitchChange.emit({ side: this.side(), value: Number((e.target as HTMLInputElement).value) }); }
   onVolume(e: Event) { this.volumeChange.emit({ side: this.side(), value: Number((e.target as HTMLInputElement).value) }); }
   onKit(e: Event) { this.kitChange.emit({ side: this.side(), value: (e.target as HTMLSelectElement).value }); }
