@@ -14,7 +14,7 @@ import { ScrollWheel } from './scroll-wheel.directive';
     <main class="wrap">
       <header class="head">
         <div>
-          <h1>beatmatch trainer</h1>
+          <h1>beatmatch trainer <span class="wip">wip</span></h1>
           <p class="sub">two decks, your ears, no sync button.</p>
         </div>
         <button type="button" class="btn theme" (click)="cycleTheme()" [attr.aria-label]="'theme: ' + theme()">
@@ -104,6 +104,7 @@ import { ScrollWheel } from './scroll-wheel.directive';
 
       <footer class="foot">
         <p>challenge mode gives deck B a hidden tempo offset - match it by ear, fader, and nudge. grades: S 95% / A 85% / B 70% / C 50% time in phase.</p>
+        <p>this tool is a work in progress - features and grading are still changing.</p>
       </footer>
     </main>
   `,
@@ -112,6 +113,7 @@ import { ScrollWheel } from './scroll-wheel.directive';
     .wrap { max-width: 860px; margin: 0 auto; padding: 18px 16px 26px; }
     .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
     .head h1 { margin: 0; font-size: 1.3rem; letter-spacing: 0.02em; }
+    .wip { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; vertical-align: middle; margin-left: 6px; padding: 3px 8px; border-radius: 999px; background: color-mix(in srgb, var(--bt-a) 12%, transparent); border: 1px solid color-mix(in srgb, var(--bt-a) 40%, transparent); color: var(--bt-a); }
     .theme { text-transform: capitalize; }
     .sub { margin: 0; opacity: 0.6; font-size: 0.82rem; }
     .head { padding-bottom: 14px; }
